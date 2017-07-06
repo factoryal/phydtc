@@ -1,11 +1,12 @@
-#include <MemoryFree.h>
+//#include <MemoryFree.h>
 #include <MPU9250.h>
+#include <I2Cdev.h>
 #include <SoftwareSerial.h>
 //#include <Wire.h>
 #include <SPI.h>
 
 // 설정에 관한 정의
-#define SERIAL_WAIT_STARTUP
+//#define SERIAL_WAIT_STARTUP
 
 // 핀에 관한 정의
 #define LED_G A0
@@ -125,8 +126,8 @@ private:
 	Vector3 a;
 	Vector3 g;
 	Vector3 m;
+	Vector3 init_a;
 	int16_t buffer[9] = { 0 };
-
 	MPU9250 MPU9250;
 
 	uint8_t sensorEnabled = 0x00;
@@ -172,12 +173,11 @@ public:
 
 	// Serial prints
 	void printAccelerometer() {
-		a.printcos();
+		(a).printcos();
 	}
 	void printGyroscope() {
 		g.printxyz();
 	}
-
 
 } GY9250;
 
@@ -265,11 +265,11 @@ void loop() {
 	Serial.print(' ');
 	GY9250.printGyroscope();
 	Serial.println();
-	//BT.print(val);
+	BT.write(val);
 	digitalWrite(LED_G, HIGH);
-	delay(50);
+	delay(500);
 	digitalWrite(LED_G, LOW);
-	delay(50);
+	delay(500);
 }
 
 // 타이머 인터럽트 실행 내용
