@@ -106,20 +106,30 @@ SoftwareSerial BT(A5, A4);
 Vector3 v(1, 1, 1);
 
 
+void buttonPressed() {
+	static uint32_t oldTime = 0, newTime = 0;
+	newTime = millis();
+	if (newTime - oldTime > 100) {
+		oldTime = newTime;
+		v += 1;
+		Serial.println(v.getX());
+		BT.print(v.getX());
+	}
+}
+
 // main()
 void setup() {
-	Serial.begin(115200);
+	Serial.begin(9600);
 	while (!Serial);
 	Serial.println("Serial ready.");
 	Serial.print("Initiallizing BT Serial port...");
-	BT.begin(115200);
+	BT.begin(9600);
 	Serial.print("OK");
+	attachInterrupt(digitalPinToInterrupt(BTN), buttonPressed, FALLING);
 	
-	
+	pinMode(BTN, INPUT_PULLUP);
 	pinMode(13, OUTPUT);
 }
 
 void loop() {
-	if (Serial.available()) BT.write(Serial.read());
-	if (BT.available()) Serial.write(BT.read());
 }
