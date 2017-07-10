@@ -1,6 +1,6 @@
 C:\Users\vkdls\AppData\Local\Temp\VMBuilds\phydtc\micro\Debug\phydtc.cpp.o: \
  C:\Users\vkdls\AppData\Local\Temp\VMBuilds\phydtc\micro\Debug\phydtc.cpp \
- C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\cores\arduino/arduino.h \
+ C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\cores\arduino/Arduino.h \
  C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\cores\arduino/binary.h \
  C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\cores\arduino/WCharacter.h \
  C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\cores\arduino/WString.h \
@@ -16,9 +16,9 @@ C:\Users\vkdls\AppData\Local\Temp\VMBuilds\phydtc\micro\Debug\phydtc.cpp.o: \
  C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\variants\micro/../leonardo/pins_arduino.h \
  C:\Users\vkdls\Documents\Arduino\libraries\IMU_10DOF-master/MPU9250.h \
  C:\Users\vkdls\Documents\Arduino\libraries\IMU_10DOF-master/I2Cdev.h \
- C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\cores\arduino/Arduino.h \
  C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\libraries\Wire\src/Wire.h \
  C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\cores\arduino/Stream.h \
  C:\Users\vkdls\Documents\Arduino\libraries\IMU_10DOF-master/I2Cdev.h \
  C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\libraries\SoftwareSerial\src/SoftwareSerial.h \
- C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\libraries\SPI\src/SPI.h
+ C:\Program\ Files\ (x86)\Arduino\hardware\arduino\avr\libraries\SPI\src/SPI.h \
+ C:\Program\ Files\ (x86)\Microsoft\ Visual\ Studio\2017\Community\Common7\IDE\Extensions\q1oqljeg.mim\Micro\ Platforms\default\debuggers\VM_DBG/VM_DBG.h
