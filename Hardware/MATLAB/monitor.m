@@ -12,13 +12,14 @@ xlabel('time');
 % ylabel('Accelerometer(Magnitude)');
 % subplot(2,1,2);
 % title('Gyroscope');
-a=zeros(1,100000);
-for i=101:100000
+a=zeros(1,10000);
+for i=101:10000
     time=time+1;
     a(1,i)=str2num(fscanf(s));
 %     subplot(2,1,1);
 %     hold on;
     plot(time-100:time, a(i-100:i), 'r*-');
+    a(1,i)
 %     plot(time, a(2), 'g*');
 %     plot(time, time^2*a(3)/2, 'b*');
 %     plot(time, sqrt(a(1)^2+a(2)^2+a(3)^2), 'r*');

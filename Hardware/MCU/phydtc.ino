@@ -169,8 +169,8 @@ public:
 	// enable 된 센서의 값을 읽고 업데이트합니다.
 	void updateData(void) {
 		MPU9250.getMotion6(buffer, buffer + 1, buffer + 2, buffer + 3, buffer + 4, buffer + 5);
-		if (sensorEnabled&ACCEL) a.set(buffer[0], buffer[1], buffer[2]); a /= 16.384;
-		if (sensorEnabled&GYRO) g.set(buffer[3], buffer[4], buffer[5]); g /= 16.384;
+		if (sensorEnabled&ACCEL) a.set(buffer[0], buffer[1], buffer[2]); a /= 16384;
+		if (sensorEnabled&GYRO) g.set(buffer[3], buffer[4], buffer[5]); g /= 16384;
 	}
 
 	// Serial prints
