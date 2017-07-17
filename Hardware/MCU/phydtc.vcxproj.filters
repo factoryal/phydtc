@@ -24,19 +24,5 @@
     <ClInclude Include="__vm\.MCU.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="hal_platform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RBL_services.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RBL_nRF8001.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="RBL_nRF8001.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

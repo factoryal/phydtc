@@ -4,11 +4,11 @@
 #include <SoftwareSerial.h>
 //#include <Wire.h>
 #include <SPI.h>
-#include <RBL_services.h>
-#include <RBL_nRF8001.h>
+//#include <RBL_services.h>
+//#include <RBL_nRF8001.h>
 
 // 설정에 관한 정의
-//#define SERIAL_WAIT_STARTUP
+#define SERIAL_WAIT_STARTUP
 
 // 핀에 관한 정의
 #define LED_G A0
@@ -169,13 +169,13 @@ public:
 	// enable 된 센서의 값을 읽고 업데이트합니다.
 	void updateData(void) {
 		MPU9250.getMotion6(buffer, buffer + 1, buffer + 2, buffer + 3, buffer + 4, buffer + 5);
-		if (sensorEnabled&ACCEL) a.set(buffer[0], buffer[1], buffer[2]); a /= 16384;
-		if (sensorEnabled&GYRO) g.set(buffer[3], buffer[4], buffer[5]); g /= 16384;
+		if (sensorEnabled&ACCEL) a.set(buffer[0], buffer[1], buffer[2]); a /= 16.384;
+		if (sensorEnabled&GYRO) g.set(buffer[3], buffer[4], buffer[5]); g /= 16.384;
 	}
 
 	// Serial prints
 	void printAccelerometer() {
-		(a).printcos();
+		Serial.print(a.getMagnitude());
 	}
 	void printGyroscope() {
 		g.printxyz();
@@ -264,14 +264,12 @@ void setup() {
 void loop() {
 	GY9250.updateData();
 	GY9250.printAccelerometer();
-	Serial.print(' ');
-	GY9250.printGyroscope();
 	Serial.println();
 	BT.write(val);
 	digitalWrite(LED_G, HIGH);
-	delay(500);
+	delay(12);
 	digitalWrite(LED_G, LOW);
-	delay(500);
+	delay(12);
 }
 
 // 타이머 인터럽트 실행 내용
