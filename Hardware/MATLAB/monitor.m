@@ -2,7 +2,7 @@ clear; close all; clc;
 
 %% monitoring
 delete(instrfindall);
-s=serial('COM7', 'BaudRate', 115200)
+s=serial('COM12', 'BaudRate', 115200)
 fopen(s);
 time=100;
 
@@ -25,12 +25,12 @@ for i=101:1e+4
     time=time+1;
     a(1,i)=str2num(fscanf(s));
     
-    switch seq
-        case 0,
-            if 
-        case 1,
-            
-    end
+%     switch seq
+%         case 0,
+%             if 
+%         case 1,
+%             
+%     end
     
 %     subplot(2,1,1);
     plot(time-100:time, a(i-100:i), 'r*-', ...
