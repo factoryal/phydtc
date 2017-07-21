@@ -25,12 +25,33 @@ for i=101:1e+4
     time=time+1;
     a(1,i)=str2num(fscanf(s));
     
-%     switch seq
-%         case 0,
-%             if 
-%         case 1,
-%             
-%     end
+    switch seq
+        case 0,
+            if a(1,i) > threshold.largemax
+             if a(1,i) > max.last
+                 max.last=a(1,i);
+                
+             elseif a(1,i) < max.last
+                  max.time=i;
+                  min.last=threshold.largemin;
+                  min.time=0;
+                  seq=1;
+              end
+            end
+        case 1,
+            if a(1,i) < threshold.largemin
+               if a(1,i) < min.last
+                 min.last=a(1,i);
+            
+               elseif a(1,i) > min.last
+                 min.time=i;
+                 max.last=threshold.largemax;
+                 max.time=0;
+                 seq=0;
+               end
+            end
+            
+    end
     
 %     subplot(2,1,1);
     plot(time-100:time, a(i-100:i), 'r*-', ...
