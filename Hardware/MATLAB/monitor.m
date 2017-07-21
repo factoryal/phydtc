@@ -2,7 +2,7 @@ clear; close all; clc;
 
 %% monitoring
 delete(instrfindall);
-s=serial('COM12', 'BaudRate', 115200)
+s=serial('COM7', 'BaudRate', 115200)
 fopen(s);
 time=100;
 
