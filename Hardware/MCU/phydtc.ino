@@ -10,7 +10,7 @@
 
 
 // 설정에 관한 정의
-//#define WAIT_SERIAL_STARTUP
+#define WAIT_SERIAL_STARTUP
 #define ANDROID_BT_PAIR_TEST 1
 
 // 핀에 관한 정의
@@ -269,16 +269,13 @@ void setup() {
 void loop() {
 	char buf[10];
 	memset(buf, 0x1111, 2);
-	memcpy(buf + 2, &b_val, 4);
+	memcpy(buf + 2, &val, 4);
 	memcpy(buf + 6, &mov, 4);
 	for (int i = 0; i < sizeof(buf); i++) BT.write(buf[i]);
 	val; mov++;
+	while (Serial.available()) BT.write(Serial.read());
+	while (BT.available()) Serial.write(BT.read());
 	delay(1000);
-}
-
-uint32_t ltob(uint32_t* v) {
-	uint8_t* s = (uint8_t *)v;
-	return s[0] << 8;
 }
 
 #else
