@@ -7,8 +7,11 @@
 //#include <RBL_services.h>
 //#include <RBL_nRF8001.h>
 
+
+
 // 설정에 관한 정의
-#define SERIAL_WAIT_STARTUP
+//#define WAIT_SERIAL_STARTUP
+#define ANDROID_BT_PAIR_TEST 1
 
 // 핀에 관한 정의
 #define LED_G A0
@@ -209,7 +212,8 @@ public:
 // 전역 변수 ------------
 
 SoftwareSerial BT(A5, A4);
-uint16_t val = 0;
+uint32_t val = 0x12345678;
+uint32_t mov = 0;
 
 
 // 버튼이 눌리면 실행되는 함수
@@ -261,6 +265,23 @@ void setup() {
 	sei();*/
 }
 
+#if ANDROID_BT_PAIR_TEST
+void loop() {
+	char buf[10];
+	memset(buf, 0x1111, 2);
+	memcpy(buf + 2, &b_val, 4);
+	memcpy(buf + 6, &mov, 4);
+	for (int i = 0; i < sizeof(buf); i++) BT.write(buf[i]);
+	val; mov++;
+	delay(1000);
+}
+
+uint32_t ltob(uint32_t* v) {
+	uint8_t* s = (uint8_t *)v;
+	return s[0] << 8;
+}
+
+#else
 void loop() {
 	GY9250.updateData();
 	GY9250.printAccelerometer();
@@ -271,6 +292,7 @@ void loop() {
 	digitalWrite(LED_G, LOW);
 	delay(12);
 }
+#endif
 
 // 타이머 인터럽트 실행 내용
 //ISR(TIMER3_COMPA_vect) {
