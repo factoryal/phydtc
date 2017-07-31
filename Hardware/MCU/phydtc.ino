@@ -10,8 +10,8 @@
 
 
 // 설정에 관한 정의
-#define WAIT_SERIAL_STARTUP
-#define ANDROID_BT_PAIR_TEST 1
+#define WAIT_SERIAL_STARTUP 1
+#define ANDROID_BT_PAIR_TEST 0
 
 // 핀에 관한 정의
 #define LED_G A0
@@ -138,8 +138,8 @@ private:
 	uint8_t sensorEnabled = 0x00;
 
 
-
 public:
+	int block = 1;
 	// constructor
 	/*GY9250() {
 	}*/
@@ -183,6 +183,7 @@ public:
 	void printGyroscope() {
 		g.printxyz();
 	}
+
 
 } GY9250;
 
@@ -241,7 +242,7 @@ void setup() {
 	attachInterrupt(digitalPinToInterrupt(BTN), btn_pressed, FALLING);
 
 	Serial.begin(115200);
-#ifdef WAIT_SERIAL_STARTUP
+#if WAIT_SERIAL_STARTUP
 	while (!Serial) {
 		if (!digitalRead(BTN)) break;
 	}
@@ -257,12 +258,12 @@ void setup() {
 	GY9250.activate(ACCEL | GYRO);
 	
 	// 타이머 인터럽트 활성화
-	/*cli();
-	TIMSK3|= 1 << TOIE3;
+	cli();
+	TIMSK3|= 1 << TOIE3; // 16-bit timer
 	TCCR3A;
-	TCCR3B = 0;
-	TCCR3B |= 1 << CS32 | 1 << CS30;
-	sei();*/
+	TCCR3B |= 1 << CS31 | 1 << CS30; // clk/64
+	sei();
+
 }
 
 #if ANDROID_BT_PAIR_TEST
@@ -280,18 +281,32 @@ void loop() {
 
 #else
 void loop() {
-	GY9250.updateData();
-	GY9250.printAccelerometer();
-	Serial.println();
-	BT.write(val);
-	digitalWrite(LED_G, HIGH);
-	delay(12);
-	digitalWrite(LED_G, LOW);
-	delay(12);
+	if (!GY9250.block) {
+		static uint32_t oldTime1 = millis();
+		if (millis() - oldTime1 > 30) {
+			oldTime1 = millis();
+			digitalWrite(LED_G, 0);
+			GY9250.updateData();
+			GY9250.printAccelerometer();
+			Serial.println();
+			digitalWrite(LED_G, 1);
+		}
+
+		static uint32_t oldTime2 = millis();
+		if (millis() - oldTime2 > 1000) {
+			oldTime2 = millis();
+			digitalWrite(LED_R, 0);
+			BT.write(val);
+			digitalWrite(LED_R, 1);
+		}
+
+		GY9250.block = 1;
+	}
+	
 }
 #endif
 
 // 타이머 인터럽트 실행 내용
-//ISR(TIMER3_COMPA_vect) {
-//	Serial.println("hello world!");
-//}
+ISR(TIMER3_OVF_vect) {
+	GY9250.block = 0;
+}
