@@ -7,7 +7,7 @@
 //#include <RBL_services.h>
 //#include <RBL_nRF8001.h>
 
-
+float fmap(float, float, float, float, float);
 
 // 설정에 관한 정의
 #define WAIT_SERIAL_STARTUP 1
@@ -172,12 +172,19 @@ public:
 	// enable 된 센서의 값을 읽고 업데이트합니다.
 	void updateData(void) {
 		MPU9250.getMotion6(buffer, buffer + 1, buffer + 2, buffer + 3, buffer + 4, buffer + 5);
-		if (sensorEnabled&ACCEL) a.set(buffer[0], buffer[1], buffer[2]);// a /= 16384;
+		if (sensorEnabled&ACCEL) a.set(fmap(buffer[0], 18750, -13950, 9.8, -9.8), fmap(buffer[1], 17800, -15000, 9.8, -9.8), fmap(buffer[2], 12875, -20550, 9.8, -9.8));// a /= 16384;
 		if (sensorEnabled&GYRO) g.set(buffer[3], buffer[4], buffer[5]);// g /= 16384;
 	}
 
 	// Serial prints
 	void printAccelerometer() {
+		/*Serial.print(a.getMagnitude());*/
+		Serial.print(a.getX());
+		Serial.print(' ');
+		Serial.print(a.getY());
+		Serial.print(' ');
+		Serial.print(a.getZ());
+		Serial.print(' ');
 		Serial.print(a.getMagnitude());
 	}
 	void printGyroscope() {
@@ -215,6 +222,11 @@ public:
 SoftwareSerial BT(A5, A4);
 uint32_t val = 0x12345678;
 uint32_t mov = 0;
+
+float fmap(float x, float in_min, float in_max, float out_min, float out_max)
+{
+	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
 
 // 버튼이 눌리면 실행되는 함수

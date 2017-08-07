@@ -1,8 +1,9 @@
 clear; close all; clc;
 
 %% monitoring
+clear; close all; clc;
 delete(instrfindall);
-s=serial('COM7', 'BaudRate', 115200)
+s=serial('COM10', 'BaudRate', 115200)
 fopen(s);
 time=100;
 
@@ -24,6 +25,7 @@ a=zeros(1,1e+4);
 for i=101:1e+4
     time=time+1;
     a(1,i)=str2num(fscanf(s));
+    a(1,i)
     
     switch seq
         case 0,
@@ -70,5 +72,37 @@ for i=101:1e+4
 %     plot([time-100: time], a(time-100:time,5), 'g*-');
 %     plot([time-100: time], a(time-100:time,6), 'b*-');
 %     xlim([time-200, time-100]);
+    drawnow;
+end
+
+%% distance measurement
+clear; close all; clc;
+delete(instrfindall);
+s=serial('COM10', 'BaudRate', 115200)
+fopen(s);
+
+pos=zeros(1,3);
+velocity=zeros(1,3);
+dt = 0.01;
+time=100;
+
+a=zeros(1e+4, 4);
+for i=101:1e+4
+    time=time+1;
+    a(i,:)=str2num(fscanf(s));
+    
+%     plot(time-100:time, a(i-100:i,1), 'r*-', ...
+%          time-100:time, a(i-100:i,2), 'g*-', ...
+%          time-100:time, a(i-100:i,3), 'b*-', ...
+%          time-100:time, a(i-100:i,4), 'k*-');
+%      xlim([time-100, time]);
+%      ylim([-20, 20]);
+%     drawnow;
+    
+    velocity = velocity + dt*a(i,1:3);
+    pos = pos + velocity*dt
+
+    plot3(pos(1), pos(2), 0, 'b*'); grid on;
+%     xlim([-10, 10]); ylim([-10, 10]); zlim([-10, 10]);
     drawnow;
 end
