@@ -32,7 +32,7 @@ for i=101:1e+4
                  max.last=a(1,i);
                 
              elseif a(1,i) < max.last
-                  max.time=i;
+                  max.time=i-1;
                   min.last=threshold.largemin;
                   min.time=0;
                   seq=1;
@@ -44,7 +44,7 @@ for i=101:1e+4
                  min.last=a(1,i);
             
                elseif a(1,i) > min.last
-                 min.time=i;
+                 min.time=i-1;
                  max.last=threshold.largemax;
                  max.time=0;
                  seq=0;
@@ -57,7 +57,7 @@ for i=101:1e+4
     plot(time-100:time, a(i-100:i), 'r*-', ...
          [time-100,time], [threshold.largemin, threshold.largemin], 'b-', ...
          [time-100,time], [threshold.largemax, threshold.largemax], 'b-', ...
-         min.time, min.last, 'go', ...
+         min.time, min.last, 'bo', ...
          max.time, max.last, 'bo');
 %     hold on;
 %     plot(time-100:time, threshold.largemin, 'b-');
