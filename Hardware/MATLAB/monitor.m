@@ -78,31 +78,41 @@ end
 %% distance measurement
 clear; close all; clc;
 delete(instrfindall);
-s=serial('COM10', 'BaudRate', 115200)
-fopen(s);
+port=serial('COM10', 'BaudRate', 115200)
+fopen(port);
 
 pos=zeros(1,3);
 velocity=zeros(1,3);
 dt = 0.01;
+s = 1;
+ic = 1.1;
 time=100;
 
 a=zeros(1e+4, 4);
 for i=101:1e+4
     time=time+1;
-    a(i,:)=str2num(fscanf(s));
+    a(i,:)=str2num(fscanf(port));
+    if a(i,4) > 9.8
+        s=s*ic;
+    elseif a(i,4) < 9.8
+        s=s/ic;
+    end
     
-%     plot(time-100:time, a(i-100:i,1), 'r*-', ...
-%          time-100:time, a(i-100:i,2), 'g*-', ...
-%          time-100:time, a(i-100:i,3), 'b*-', ...
-%          time-100:time, a(i-100:i,4), 'k*-');
-%      xlim([time-100, time]);
-%      ylim([-20, 20]);
-%     drawnow;
+    s
+    a(i,:) = s*a(i,:);
     
-    velocity = velocity + dt*a(i,1:3);
-    pos = pos + velocity*dt
-
-    plot3(pos(1), pos(2), 0, 'b*'); grid on;
-%     xlim([-10, 10]); ylim([-10, 10]); zlim([-10, 10]);
+    plot(time-100:time, a(i-100:i,1), 'r*-', ...
+         time-100:time, a(i-100:i,2), 'g*-', ...
+         time-100:time, a(i-100:i,3), 'b*-', ...
+         time-100:time, a(i-100:i,4), 'k*-');
+     xlim([time-100, time]);
+     ylim([-20, 20]);
     drawnow;
+    
+%     velocity = velocity + dt*a(i,1:3);
+%     pos = pos + velocity*dt
+% 
+%     plot3(pos(1), pos(2), 0, 'b*'); grid on;
+% %     xlim([-10, 10]); ylim([-10, 10]); zlim([-10, 10]);
+%     drawnow;
 end
