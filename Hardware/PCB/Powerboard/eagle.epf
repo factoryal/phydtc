@@ -354,7 +354,7 @@ UsedLibrary="C:/EAGLE 8.0/lbr/zilog.lbr"
 
 [Win_1]
 Type="Schematic Editor"
-Loc="-8 -31 1191 568"
+Loc="0 0 1199 599"
 State=0
 Number=2
 File="powerboard.sch"
@@ -397,6 +397,7 @@ ArcDirection=0
 AddLevel=2
 PadsSameType=0
 Layer=91
+Views=" 1: -3.43205 8.70915 171.072 80.1908"
 Sheet="1"
 
 [Win_2]
