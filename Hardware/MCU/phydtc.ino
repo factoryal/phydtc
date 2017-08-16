@@ -13,6 +13,11 @@ float fmap(float, float, float, float, float);
 #define WAIT_SERIAL_STARTUP 1
 #define ANDROID_BT_PAIR_TEST 0
 
+// 상수에 관한 정의
+#define ts 0.03
+#define tau 1/(0.8*2*3.14)
+#define ttt ts/(tau+ts)
+
 // 핀에 관한 정의
 #define LED_G A0
 #define LED_R 13
@@ -129,7 +134,9 @@ enum SENSOR {
 class GY9250 {
 private:
 	Vector3 a;
+	Vector3 ba;
 	Vector3 g;
+	Vector3 bg;
 	Vector3 m;
 	Vector3 init_a;
 	int16_t buffer[9] = { 0 };
@@ -172,8 +179,16 @@ public:
 	// enable 된 센서의 값을 읽고 업데이트합니다.
 	void updateData(void) {
 		MPU9250.getMotion6(buffer, buffer + 1, buffer + 2, buffer + 3, buffer + 4, buffer + 5);
-		if (sensorEnabled&ACCEL) a.set(fmap(buffer[0], 18750, -13950, 9.8, -9.8), fmap(buffer[1], 17800, -15000, 9.8, -9.8), fmap(buffer[2], 12875, -20550, 9.8, -9.8));// a /= 16384;
-		if (sensorEnabled&GYRO) g.set(buffer[3], buffer[4], buffer[5]);// g /= 16384;
+		if (sensorEnabled&ACCEL) {
+			a.set(fmap(buffer[0], 18750, -13950, 9.8, -9.8), fmap(buffer[1], 17800, -15000, 9.8, -9.8), fmap(buffer[2], 12875, -20550, 9.8, -9.8));// a /= 16384;
+			a = ba + (a - ba)*ttt;
+			ba = a;
+		}
+		if (sensorEnabled&GYRO) {
+			g.set(buffer[3], buffer[4], buffer[5]);// g /= 16384;
+			g = bg + (g - bg)*ttt;
+			bg = g;
+		}
 	}
 
 	// Serial prints
@@ -188,7 +203,13 @@ public:
 		Serial.print(a.getMagnitude());
 	}
 	void printGyroscope() {
-		g.printxyz();
+		Serial.print(g.getX());
+		Serial.print(' ');
+		Serial.print(g.getY());
+		Serial.print(' ');
+		Serial.print(g.getZ());
+		Serial.print(' ');
+		Serial.print(g.getMagnitude());
 	}
 
 
@@ -315,6 +336,10 @@ void loop() {
 		GY9250.block = 1;
 	}
 	
+	// measure service
+	// timein 범위: 100ms~3000ms
+	// min delta*t: 3
+
 }
 #endif
 

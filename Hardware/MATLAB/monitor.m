@@ -86,27 +86,34 @@ velocity=zeros(1,3);
 dt = 0.01;
 s = 1;
 ic = 1.1;
+ts = 0.03;
+tau = 1/(1.3*2*pi);
+ttt = ts/(tau+ts);
 time=100;
 
 a=zeros(1e+4, 4);
 for i=101:1e+4
     time=time+1;
     a(i,:)=str2num(fscanf(port));
-    if a(i,4) > 9.8
-        s=s*ic;
-    elseif a(i,4) < 9.8
-        s=s/ic;
-    end
+%     if a(i,4) > 9.8
+%         s=s*ic;
+%     elseif a(i,4) < 9.8
+%         s=s/ic;
+%     end
     
-    s
-    a(i,:) = s*a(i,:);
+%     s
+%     a(i,:) = s*a(i,:);
+    
+    
     
     plot(time-100:time, a(i-100:i,1), 'r*-', ...
          time-100:time, a(i-100:i,2), 'g*-', ...
          time-100:time, a(i-100:i,3), 'b*-', ...
          time-100:time, a(i-100:i,4), 'k*-');
      xlim([time-100, time]);
-     ylim([-20, 20]);
+%      ylim([-4e+4, 6e+4]);
+    ylim([-20,20]);
+    grid;
     drawnow;
     
 %     velocity = velocity + dt*a(i,1:3);
