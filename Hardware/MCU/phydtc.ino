@@ -10,13 +10,15 @@
 float fmap(float, float, float, float, float);
 
 // 설정에 관한 정의
-#define WAIT_SERIAL_STARTUP 1
-#define ANDROID_BT_PAIR_TEST 0
+#define WAIT_SERIAL_STARTUP 0
+#define ANDROID_BT_PAIR_TEST 1
 
 // 상수에 관한 정의
 #define ts 0.03
 #define tau 1/(0.8*2*3.14)
+#define ttau 1/(0.5*2*3.14)
 #define ttt ts/(tau+ts)
+#define tttt ts/(ttau+ts)
 
 // 핀에 관한 정의
 #define LED_G A0
@@ -135,11 +137,17 @@ class GY9250 {
 private:
 	Vector3 a;
 	Vector3 ba;
+	Vector3 ta;
+	Vector3 tba;
 	Vector3 g;
 	Vector3 bg;
 	Vector3 m;
 	Vector3 init_a;
 	int16_t buffer[9] = { 0 };
+	struct {
+		bool isrising[3] = { 1,1,1 };
+		uint32_t count = 0;
+	} c; //xyzcount
 	MPU9250 MPU9250;
 
 	uint8_t sensorEnabled = 0x00;
@@ -182,13 +190,59 @@ public:
 		if (sensorEnabled&ACCEL) {
 			a.set(fmap(buffer[0], 18750, -13950, 9.8, -9.8), fmap(buffer[1], 17800, -15000, 9.8, -9.8), fmap(buffer[2], 12875, -20550, 9.8, -9.8));// a /= 16384;
 			a = ba + (a - ba)*ttt;
+			ta = tba + (a - tba)*tttt;
 			ba = a;
+			tba = ta;
 		}
 		if (sensorEnabled&GYRO) {
 			g.set(buffer[3], buffer[4], buffer[5]);// g /= 16384;
 			g = bg + (g - bg)*ttt;
 			bg = g;
 		}
+	}
+
+	void countService() {
+		if (c.isrising[0]) {
+			if (a.getX() > ta.getX() + 1) {
+				c.isrising[0] = false;
+			}
+		}
+		else {
+			if (a.getX() < ta.getX() - 1) {
+				c.isrising[0] = true;
+				c.count++;
+				return;
+			}
+		}
+		//if (c.isrising[1]) {
+		//	if (a.getY() > ta.getY() + 2) {
+		//		c.isrising[1] = false;
+		//	}
+		//}
+		//else {
+		//	if (a.getY() < ta.getY() - 2) {
+		//		c.isrising[1] = true;
+		//		c.count++;
+		//		return;
+		//	}
+		//}
+		//if (c.isrising[2]) {
+		//	if (a.getZ() > ta.getZ() + 2) {
+		//		c.isrising[2] = false;
+		//	}
+		//}
+		//else {
+		//	if (a.getZ() < ta.getZ() - 2) {
+		//		c.isrising[2] = true;
+		//		c.count++;
+		//		return;
+		//	}
+		//}
+		
+	}
+
+	uint32_t getCount() {
+		return c.count;
 	}
 
 	// Serial prints
@@ -201,6 +255,8 @@ public:
 		Serial.print(a.getZ());
 		Serial.print(' ');
 		Serial.print(a.getMagnitude());
+		Serial.print(' ');
+		Serial.print(ta.getX());
 	}
 	void printGyroscope() {
 		Serial.print(g.getX());
@@ -241,7 +297,7 @@ public:
 // 전역 변수 ------------
 
 SoftwareSerial BT(A5, A4);
-uint32_t val = 0x12345678;
+uint32_t val = 0x00;
 uint32_t mov = 0;
 
 float fmap(float x, float in_min, float in_max, float out_min, float out_max)
@@ -302,14 +358,32 @@ void setup() {
 #if ANDROID_BT_PAIR_TEST
 void loop() {
 	char buf[10];
-	memset(buf, 0x1111, 2);
-	memcpy(buf + 2, &val, 4);
-	memcpy(buf + 6, &mov, 4);
-	for (int i = 0; i < sizeof(buf); i++) BT.write(buf[i]);
-	val; mov++;
-	while (Serial.available()) BT.write(Serial.read());
-	while (BT.available()) Serial.write(BT.read());
-	delay(1000);
+	if (!GY9250.block) {
+		static uint32_t oldTime1 = millis();
+		if (millis() - oldTime1 > 30) {
+			oldTime1 = millis();
+			digitalWrite(LED_G, 0);
+			GY9250.updateData();
+			GY9250.printAccelerometer();
+			Serial.println();
+			GY9250.countService();
+			digitalWrite(LED_G, 1);
+		}
+
+		static uint32_t oldTime2 = millis();
+		if (millis() - oldTime2 > 1000) {
+			oldTime2 = millis();
+			digitalWrite(LED_R, 0);
+			val = GY9250.getCount();
+			memset(buf, 0x1111, 2);
+			memcpy(buf + 2, &val, 4);
+			memcpy(buf + 6, &mov, 4);
+			for (int i = 0; i < sizeof(buf); i++) BT.write(buf[i]);
+			digitalWrite(LED_R, 1);
+		}
+
+		GY9250.block = 1;
+	}
 }
 
 #else
@@ -322,6 +396,7 @@ void loop() {
 			GY9250.updateData();
 			GY9250.printAccelerometer();
 			Serial.println();
+			GY9250.countService();
 			digitalWrite(LED_G, 1);
 		}
 
@@ -329,6 +404,7 @@ void loop() {
 		if (millis() - oldTime2 > 1000) {
 			oldTime2 = millis();
 			digitalWrite(LED_R, 0);
+			val = GY9250.getCount();
 			BT.write(val);
 			digitalWrite(LED_R, 1);
 		}

@@ -81,35 +81,36 @@ delete(instrfindall);
 port=serial('COM10', 'BaudRate', 115200)
 fopen(port);
 
-pos=zeros(1,3);
-velocity=zeros(1,3);
-dt = 0.01;
-s = 1;
-ic = 1.1;
-ts = 0.03;
-tau = 1/(1.3*2*pi);
-ttt = ts/(tau+ts);
+x = struct('isrising', 1, 'max', 0, 'min', 0, ...
+           'found', 0, 'threshold', 0, 'count', 0);
+
 time=100;
 
-a=zeros(1e+4, 4);
+a=zeros(1e+4, 5);
 for i=101:1e+4
     time=time+1;
     a(i,:)=str2num(fscanf(port));
-%     if a(i,4) > 9.8
-%         s=s*ic;
-%     elseif a(i,4) < 9.8
-%         s=s/ic;
-%     end
-    
-%     s
-%     a(i,:) = s*a(i,:);
-    
+
+%     timeout 최소 시간은 0.2초, 최대 시간은 2초로
+% %     이전 측정과 시간이 비슷할 것 10%
+%     최소 가속도 범위는 3
+%     측정 우선순위 x -> y -> z
+    if x.isrising
+        if a(i,1)>a(i,5) + 2
+            x.isrising = 0;
+        end
+    else
+        if a(i,1)<a(i,5)-2
+            x.isrising=1;
+            x.count=x.count+1
+        end
+    end
     
     
     plot(time-100:time, a(i-100:i,1), 'r*-', ...
          time-100:time, a(i-100:i,2), 'g*-', ...
          time-100:time, a(i-100:i,3), 'b*-', ...
-         time-100:time, a(i-100:i,4), 'k*-');
+         time-100:time, a(i-100:i,5), 'k*-');
      xlim([time-100, time]);
 %      ylim([-4e+4, 6e+4]);
     ylim([-20,20]);
