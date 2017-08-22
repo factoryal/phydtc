@@ -18,6 +18,7 @@ UsedLibrary="C:/EAGLE 8.0.2/lbr/74xx-little-us.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/74xx-us.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/751xx.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/IQD-Frequency-Products.lbr"
+UsedLibrary="C:/EAGLE 8.0.2/lbr/SparkFun-LED.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/advanced-test-technologies.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/agilent-technologies.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/allegro.lbr"
@@ -307,6 +308,7 @@ UsedLibrary="C:/EAGLE 8.0.2/lbr/switch-misc.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/switch-omron.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/switch-raychem.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/switch-reed.lbr"
+UsedLibrary="C:/EAGLE 8.0.2/lbr/switch-tact.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/switch.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/telcom.lbr"
 UsedLibrary="C:/EAGLE 8.0.2/lbr/telecontrolli.lbr"
@@ -351,7 +353,7 @@ UsedLibrary="C:/EAGLE 8.0.2/lbr/zilog.lbr"
 [Win_1]
 Type="Control Panel"
 Loc="2162 353 3361 952"
-State=2
+State=0
 Number=0
 
 [Desktop]

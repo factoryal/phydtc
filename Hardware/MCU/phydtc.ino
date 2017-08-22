@@ -372,22 +372,25 @@ void loop() {
 
 		static uint32_t oldTime2 = millis();
 		if (millis() - oldTime2 > 1000) {
-			char willsend[15] = { '0' };
+			String willsend;
+			char buf[10];
 			oldTime2 = millis();
 			digitalWrite(LED_R, 0);
 			val = GY9250.getCount();
-			memset(buf, 0x1111, 2);
+			/*memset(buf, 0x1111, 2);
 			memcpy(buf + 2, &val, 4);
 			memcpy(buf + 6, &mov, 4);
-			for (int i = 0; i < sizeof(buf); i++) BT.write(buf[i]);
-			/*memcpy(willsend, (void*)"1111", 4);
-			willsend[4] = ' ';
-			itoa(val, willsend + 5, 10);
-			willsend[11] = ' ';
-			memcpy(willsend+12, (void*)'0', 2);
-			willsend[14] = '\n';
+			for (int i = 0; i < sizeof(buf); i++) BT.write(buf[i]);*/
+			willsend += "1111";
+			willsend += '/';
+			willsend += itoa(val, buf, 10);
+			willsend += '/';
+			willsend += '0';
+			willsend += '\n';
+			BT.print(willsend);
+
 			digitalWrite(LED_R, 1);
-			for (int i = 0; i < sizeof(willsend); i++) BT.write(willsend[i]);*/
+			for (int i = 0; i < sizeof(willsend); i++) BT.write(willsend[i]);
 		}
 
 		GY9250.block = 1;
