@@ -4,16 +4,18 @@
 #include <SoftwareSerial.h>
 //#include <Wire.h>
 #include <SPI.h>
-//#include <RBL_services.h>
-//#include <RBL_nRF8001.h>
+#include <RBL_services.h>
+#include <RBL_nRF8001.h>
 
 float fmap(float, float, float, float, float);
 
 // 설정에 관한 정의
 #define WAIT_SERIAL_STARTUP 0
 #define ANDROID_BT_PAIR_TEST 1
+#define BT_NRF8001 1
 
 // 상수에 관한 정의
+#define BLE_NAME "Devsign"
 #define ts 0.03
 #define tau 1/(0.8*2*3.14)
 #define ttau 1/(0.5*2*3.14)
@@ -23,9 +25,13 @@ float fmap(float, float, float, float, float);
 // 핀에 관한 정의
 #define LED_G A0
 #define LED_R 13
-#define BTN 7
+#define BTN 8
 #define S1TX A4
 #define S2RX A5
+#define BAT_REMAIN A2
+#define BAT_CHRG 3
+#define BAT_STBY 5
+
 
 // Vector3 클래스
 // 3차원 벡터를 관리하는 클래스입니다.
@@ -148,7 +154,7 @@ private:
 		bool isrising[3] = { 1,1,1 };
 		uint32_t count = 0;
 	} c; //xyzcount
-	MPU9250 MPU9250;
+	MPU9250 M;
 
 	uint8_t sensorEnabled = 0x00;
 
@@ -161,24 +167,24 @@ public:
 
 	bool init() {
 		Serial.println(F("GY9250 initializing...."));
-		MPU9250.initialize();
+		M.initialize();
 		delay(1000);
-		Serial.print(F("Device ID: ")); Serial.println(MPU9250.getDeviceID(), HEX);
-		return MPU9250.testConnection();
+		Serial.print(F("Device ID: ")); Serial.println(M.getDeviceID(), HEX);
+		return M.testConnection();
 	}
 
 	// 센서 선택
 	uint8_t activate(uint8_t en) {
 		sensorEnabled = en;
 		if (sensorEnabled&ACCEL) {
-			MPU9250.setStandbyXAccelEnabled(0);
-			MPU9250.setStandbyYAccelEnabled(0);
-			MPU9250.setStandbyZAccelEnabled(0);
+			M.setStandbyXAccelEnabled(0);
+			M.setStandbyYAccelEnabled(0);
+			M.setStandbyZAccelEnabled(0);
 		}
 		if (sensorEnabled&GYRO) {
-			MPU9250.setStandbyXGyroEnabled(0);
-			MPU9250.setStandbyYGyroEnabled(0);
-			MPU9250.setStandbyZGyroEnabled(0);
+			M.setStandbyXGyroEnabled(0);
+			M.setStandbyYGyroEnabled(0);
+			M.setStandbyZGyroEnabled(0);
 		}
 		Serial.print(F("Sensor enabled: ")); Serial.print(sensorEnabled&ACCEL); Serial.println(sensorEnabled&GYRO);
 		return sensorEnabled;
@@ -186,7 +192,7 @@ public:
 
 	// enable 된 센서의 값을 읽고 업데이트합니다.
 	void updateData(void) {
-		MPU9250.getMotion6(buffer, buffer + 1, buffer + 2, buffer + 3, buffer + 4, buffer + 5);
+		M.getMotion6(buffer, buffer + 1, buffer + 2, buffer + 3, buffer + 4, buffer + 5);
 		if (sensorEnabled&ACCEL) {
 			a.set(fmap(buffer[0], 18750, -13950, 9.8, -9.8), fmap(buffer[1], 17800, -15000, 9.8, -9.8), fmap(buffer[2], 12875, -20550, 9.8, -9.8));// a /= 16384;
 			a = ba + (a - ba)*ttt;
@@ -277,26 +283,127 @@ public:
 // LED의 상태를 관리하는 클래스입니다.
 class LED {
 private:
-	uint8_t R;
-	uint8_t G;
-	uint8_t status;
+	struct ledinfo{
+		uint8_t pin;
+		uint8_t s = 0;
+		(void)(*activator)(ledinfo, uint16_t);
+	} led[2];
 
-public:
-	LED(uint8_t red, uint8_t green) : R(red), G(green) {};
+	void blinker(ledinfo l, uint16_t t) {
 
-	void update() {
-		status & 0x01 ? digitalWrite(R, 0) : digitalWrite(R, 1);
-		status & 0x02 ? digitalWrite(G, 0) : digitalWrite(G, 1);
 	}
 
-	void set() {}
+public:
+	enum {
+		RED, GREEN
+	};
 
-};
+	LED(uint8_t red, uint8_t green) {
+		led[0].pin = red; led[1].pin = green;
+	}
+
+	/*void update() {
+		for (int i = 0; i < 2; i++) {
+			led[i].activator();
+			digitalWrite(led[i].pin, led[i].s);
+		}
+	}
+
+	void set(uint8_t color, bool s) {}
+	void blink(uint8_t color, uint16_t t) {
+		led[color].activator = blinker;
+	}*/
+
+} LED(LED_R, LED_G);
 
 
-// 전역 변수 ------------
+// BAT 클래스
+// 배터리의 상태를 관리하는 클래스입니다.
+class BAT {
+private:
+	uint8_t s = DRAIN;
+	uint8_t remain = 0;
 
+	uint8_t Li1SVto100p(uint16_t r) {
+		float v = fmap(r, 0, 1023, 0, 3.3);
+		v = fmap(v, 3.5 / 2, 4.19 / 2, 0, 100);
+		return v > 0 ? v : 0;
+	}
+
+public:
+	enum STATUS {
+		DRAIN, CHRG, STBY
+	};
+
+	BAT() {
+		pinMode(BAT_CHRG, 0);
+		pinMode(BAT_STBY, 0);
+	}
+
+	uint8_t status() { return s; };
+	uint8_t level() { return remain; };
+
+	void update() {
+		if (!digitalRead(BAT_CHRG)) s = CHRG;
+		else if (!digitalRead(BAT_STBY)) s = STBY;
+		else s = DRAIN;
+		remain = Li1SVto100p(analogRead(BAT_REMAIN));
+	}
+} BAT;
+
+
+// BLUETOOTH 클래스
+// 개발보드의 경우, SoftwareSerial 클래스를 사용하고
+// 프로토타입의 경우, BLUETOOTH 클래스를 사용합니다.
+// BT_NRF8001 = 1이면 프로토타입, 아니면 개발보드입니다.
+#if BT_NRF8001
+class BLUETOOTH {
+private: 
+	uint8_t buf_len = 0;
+
+public:
+	void begin(long ignored) {
+		ble_begin();
+		ble_set_name(BLE_NAME);
+	}
+	
+	void write(unsigned char data) { ble_write(data); }
+	void writeBytes(unsigned char *data, uint8_t len) { ble_write_bytes(data, len); }
+	int read() { return ble_read(); }
+	unsigned char available() { return ble_available(); }
+	unsigned char isConnected() { return ble_connected(); }
+	void ble_write_string(byte *bytes, uint8_t len) {
+		if (buf_len + len > 20)
+		{
+			for (int j = 0; j < 15000; j++)
+				ble_do_events();
+
+			buf_len = 0;
+		}
+
+		for (int j = 0; j < len; j++)
+		{
+			ble_write(bytes[j]);
+			buf_len++;
+		}
+
+		if (buf_len == 20)
+		{
+			for (int j = 0; j < 15000; j++)
+				ble_do_events();
+
+			buf_len = 0;
+		}
+	}
+	void end() { ble_disconnect(); }
+} BT;
+#else
 SoftwareSerial BT(A5, A4);
+#endif
+
+
+// 전역 ------------
+
 uint32_t val = 0x00;
 uint32_t mov = 0;
 
@@ -328,7 +435,7 @@ void setup() {
 	pinMode(BTN, INPUT_PULLUP);
 	digitalWrite(LED_R, HIGH);
 	digitalWrite(LED_G, HIGH);
-	attachInterrupt(digitalPinToInterrupt(BTN), btn_pressed, FALLING);
+	//attachInterrupt(digitalPinToInterrupt(BTN), btn_pressed, FALLING);
 
 	Serial.begin(115200);
 #if WAIT_SERIAL_STARTUP
@@ -360,38 +467,49 @@ void loop() {
 	char buf[10];
 	if (!GY9250.block) {
 		static uint32_t oldTime1 = millis();
+		static bool sw = false;
 		if (millis() - oldTime1 > 30) {
 			oldTime1 = millis();
+
 			digitalWrite(LED_G, 0);
 			GY9250.updateData();
 			GY9250.printAccelerometer();
 			Serial.println();
 			GY9250.countService();
 			digitalWrite(LED_G, 1);
+
+			// btn falling interrupt (polling)
+			if (!digitalRead(BTN) && !sw) {
+				btn_pressed();
+				sw = true;
+			}
+			if (sw && digitalRead(BTN)) sw = false;
 		}
 
 		static uint32_t oldTime2 = millis();
 		if (millis() - oldTime2 > 1000) {
-			String willsend;
+			char willsend[20] = { 0 };
 			char buf[10];
 			oldTime2 = millis();
+
 			digitalWrite(LED_R, 0);
 			val = GY9250.getCount();
 			/*memset(buf, 0x1111, 2);
 			memcpy(buf + 2, &val, 4);
 			memcpy(buf + 6, &mov, 4);
 			for (int i = 0; i < sizeof(buf); i++) BT.write(buf[i]);*/
-			willsend += "1111";
-			willsend += '/';
-			willsend += itoa(val, buf, 10);
-			willsend += '/';
-			willsend += '0';
-			willsend += '\n';
-			BT.print(willsend);
+			strcat(willsend, "1111");
+			strcat(willsend, "/");
+			strcat(willsend, itoa(val, buf, 10));
+			strcat(willsend, "/");
+			strcat(willsend, "0");
+			strcat(willsend, "\n");
+			BT.writeBytes((unsigned char*)willsend, sizeof(willsend));
 
 			digitalWrite(LED_R, 1);
 			for (int i = 0; i < sizeof(willsend); i++) BT.write(willsend[i]);
 		}
+
 
 		GY9250.block = 1;
 	}
