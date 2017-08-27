@@ -289,9 +289,6 @@ private:
 		(void)(*activator)(ledinfo, uint16_t);
 	} led[2];
 
-	void blinker(ledinfo l, uint16_t t) {
-
-	}
 
 public:
 	enum {
@@ -313,6 +310,8 @@ public:
 	void blink(uint8_t color, uint16_t t) {
 		led[color].activator = blinker;
 	}*/
+
+	void turn(uint8_t color, bool s) { digitalWrite(led[color].pin, s); }
 
 } LED(LED_R, LED_G);
 
