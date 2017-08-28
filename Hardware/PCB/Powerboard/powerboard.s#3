@@ -10207,6 +10207,8 @@ at 30/07/2012 17:45:58</description>
 <part name="GND4" library="supply1" deviceset="GND" device=""/>
 <part name="P+3" library="supply1" deviceset="+5V" device=""/>
 <part name="GND5" library="supply1" deviceset="GND" device=""/>
+<part name="3V3" library="wirepad" deviceset="SMD5" device=""/>
+<part name="+3V2" library="supply1" deviceset="+3V3" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -10246,6 +10248,8 @@ at 30/07/2012 17:45:58</description>
 <instance part="GND4" gate="1" x="22.86" y="15.24" rot="R90"/>
 <instance part="P+3" gate="1" x="50.8" y="20.32" rot="R270"/>
 <instance part="GND5" gate="1" x="50.8" y="15.24" rot="R90"/>
+<instance part="3V3" gate="1" x="88.9" y="17.78"/>
+<instance part="+3V2" gate="G$1" x="106.68" y="17.78" rot="R270"/>
 </instances>
 <busses>
 </busses>
@@ -10386,6 +10390,11 @@ at 30/07/2012 17:45:58</description>
 <pinref part="U1" gate="A" pin="OUT"/>
 <pinref part="+3V1" gate="G$1" pin="+3V3"/>
 <wire x1="149.86" y1="60.96" x2="144.78" y2="60.96" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="3V3" gate="1" pin="P"/>
+<pinref part="+3V2" gate="G$1" pin="+3V3"/>
+<wire x1="104.14" y1="17.78" x2="91.44" y2="17.78" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>

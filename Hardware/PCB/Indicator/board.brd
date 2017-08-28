@@ -72,10 +72,13 @@
 </layers>
 <board>
 <plain>
-<wire x1="0" y1="0" x2="15" y2="0" width="0" layer="20"/>
-<wire x1="15" y1="0" x2="15" y2="18" width="0" layer="20"/>
-<wire x1="15" y1="18" x2="0" y2="18" width="0" layer="20"/>
+<wire x1="0" y1="0" x2="14" y2="0" width="0" layer="20"/>
+<wire x1="14" y1="0" x2="14" y2="18" width="0" layer="20"/>
+<wire x1="14" y1="18" x2="0" y2="18" width="0" layer="20"/>
 <wire x1="0" y1="18" x2="0" y2="0" width="0" layer="20"/>
+<wire x1="14" y1="18" x2="15" y2="18" width="0" layer="20"/>
+<wire x1="15" y1="18" x2="15" y2="0" width="0" layer="20"/>
+<wire x1="15" y1="0" x2="14" y2="0" width="0" layer="20"/>
 </plain>
 <libraries>
 <library name="wirepad">
@@ -1489,10 +1492,10 @@ design rules under a new name.</description>
 <wire x1="2.81" y1="10.69" x2="2.97" y2="10.69" width="0.6096" layer="1"/>
 <wire x1="2.97" y1="10.69" x2="2.97" y2="6.55" width="0.6096" layer="1"/>
 <wire x1="2.97" y1="6.55" x2="1.38" y2="6.55" width="0.6096" layer="1"/>
-<polygon width="0.3048" layer="1" isolate="0.8128" orphans="yes">
+<polygon width="0.3048" layer="1" isolate="0.85">
 <vertex x="0" y="18"/>
-<vertex x="15" y="18"/>
-<vertex x="15" y="0"/>
+<vertex x="14" y="18"/>
+<vertex x="14" y="0"/>
 <vertex x="0" y="0"/>
 </polygon>
 </signal>

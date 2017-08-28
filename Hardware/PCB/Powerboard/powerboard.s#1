@@ -10194,7 +10194,7 @@ at 30/07/2012 17:45:58</description>
 <part name="GND1" library="supply1" deviceset="GND" device=""/>
 <part name="P+1" library="supply1" deviceset="+5V" device=""/>
 <part name="P+2" library="supply1" deviceset="+5V" device=""/>
-<part name="C1" library="rcl" deviceset="CPOL-US" device="R/2012-12R" value="10uF"/>
+<part name="C1" library="rcl" deviceset="CPOL-US" device="R/2012-12R"/>
 <part name="GND3" library="supply1" deviceset="GND" device=""/>
 <part name="R3" library="rcl" deviceset="R-US_" device="M2012" value="103"/>
 <part name="GND2" library="supply1" deviceset="GND" device=""/>
