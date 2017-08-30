@@ -12,7 +12,7 @@ float fmap(float, float, float, float, float);
 // 설정에 관한 정의
 #define WAIT_SERIAL_STARTUP 0
 #define ANDROID_BT_PAIR_TEST 1
-#define BT_NRF8001 1
+#define BT_NRF8001 0
 
 // 상수에 관한 정의
 #define BLE_NAME "Devsign"
@@ -152,6 +152,10 @@ private:
 	int16_t buffer[9] = { 0 };
 	struct {
 		bool isrising[3] = { 1,1,1 };
+		uint32_t lastTime1[3] = { 0 };
+		uint32_t lastTime2[3] = { 0 };
+		bool patternSwich[3] = { 0,0,0 };
+		uint8_t countBuffer = 0;
 		uint32_t count = 0;
 	} c; //xyzcount
 	MPU9250 M;
@@ -209,6 +213,7 @@ public:
 
 	void countService() {
 		if (c.isrising[0]) {
+			
 			if (a.getX() > ta.getX() + 1) {
 				c.isrising[0] = false;
 			}
@@ -216,10 +221,23 @@ public:
 		else {
 			if (a.getX() < ta.getX() - 1) {
 				c.isrising[0] = true;
-				c.count++;
-				return;
+				uint32_t delta0 = (millis() - c.lastTime1[0]);
+				uint32_t delta1 = (c.lastTime1[0] - c.lastTime2[0]);
+				float deltaRatio = (float)delta1 / delta0;
+				if (deltaRatio>0.80 && deltaRatio<1.20 && delta0<2000 && delta0>230) {
+					c.countBuffer++;
+					c.count += c.countBuffer;
+					c.countBuffer = 0;
+				}
+				else {
+					c.countBuffer = 2;
+				}
+				c.lastTime2[0] = c.lastTime1[0];
+				c.lastTime1[0] = millis();
+				
 			}
 		}
+		return;
 		//if (c.isrising[1]) {
 		//	if (a.getY() > ta.getY() + 2) {
 		//		c.isrising[1] = false;
@@ -245,6 +263,8 @@ public:
 		//	}
 		//}
 		
+		c.count += c.countBuffer;
+		c.countBuffer = 0;
 	}
 
 	uint32_t getCount() {
@@ -286,7 +306,7 @@ private:
 	struct ledinfo{
 		uint8_t pin;
 		uint8_t s = 0;
-		(void)(*activator)(ledinfo, uint16_t);
+		//(void)(*activator)(ledinfo, uint16_t);
 	} led[2];
 
 
@@ -394,7 +414,7 @@ public:
 			buf_len = 0;
 		}
 	}
-	void end() { ble_disconnect(); }
+	//void end() { ble_disconnect(); }
 } BT;
 #else
 SoftwareSerial BT(A5, A4);
@@ -486,7 +506,7 @@ void loop() {
 		}
 
 		static uint32_t oldTime2 = millis();
-		if (millis() - oldTime2 > 1000) {
+		if (millis() - oldTime2 > 300) {
 			char willsend[20] = { 0 };
 			char buf[10];
 			oldTime2 = millis();
@@ -503,10 +523,14 @@ void loop() {
 			strcat(willsend, "/");
 			strcat(willsend, "0");
 			strcat(willsend, "\n");
+#if BT_NRF8001
 			BT.writeBytes((unsigned char*)willsend, sizeof(willsend));
+#else
+			BT.print(willsend);
+#endif
 
 			digitalWrite(LED_R, 1);
-			for (int i = 0; i < sizeof(willsend); i++) BT.write(willsend[i]);
+			//for (int i = 0; i < sizeof(willsend); i++) BT.write(willsend[i]);
 		}
 
 
