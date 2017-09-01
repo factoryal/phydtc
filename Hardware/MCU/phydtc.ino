@@ -1,4 +1,4 @@
-//#include <MemoryFree.h>
+#include <MemoryFree.h>
 #include <MPU9250.h>
 #include <I2Cdev.h>
 #include <SoftwareSerial.h>
@@ -6,12 +6,14 @@
 #include <SPI.h>
 #include <RBL_services.h>
 #include <RBL_nRF8001.h>
+#include <time.h>
 
 float fmap(float, float, float, float, float);
+uint32_t atou32(const char* str);
 
 // 설정에 관한 정의
 #define WAIT_SERIAL_STARTUP 0
-#define ANDROID_BT_PAIR_TEST 1
+#define ANDROID_BT_PAIR_TEST 0
 #define BT_NRF8001 0
 
 // 상수에 관한 정의
@@ -27,7 +29,7 @@ float fmap(float, float, float, float, float);
 #define LED_R 13
 #define BTN 8
 #define S1TX A4
-#define S2RX A5
+#define S2RX 11
 #define BAT_REMAIN A2
 #define BAT_CHRG 3
 #define BAT_STBY 5
@@ -417,27 +419,52 @@ public:
 	//void end() { ble_disconnect(); }
 } BT;
 #else
-SoftwareSerial BT(A5, A4);
+SoftwareSerial BT(S2RX, S1TX);
 #endif
 
+
+// CountLog 클래스
+// 카운트된 값을 저장하는 클래스입니다.
+class CountLog {
+private:
+	struct table_count{
+		uint16_t year;
+		uint8_t month;
+		uint8_t day;
+		uint32_t count;
+	};
+
+
+public:
+
+};
 
 // 전역 ------------
 
 uint32_t val = 0x00;
 uint32_t mov = 0;
+struct {
+	char buf[20] = { 0 };
+	byte idx = 0;
+} BT_rx, BT_tx;
+
 
 float fmap(float x, float in_min, float in_max, float out_min, float out_max)
 {
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
-
+uint32_t atou32(const char* str) {
+	uint32_t willreturn = 0;
+	for (int i = 0; str[i] >= '0' && str[i] <= '9'; i++) willreturn = 10 * willreturn + str[i] - '0';
+	return willreturn;
+}
 
 // 버튼이 눌리면 실행되는 함수
 void btn_pressed() {
 	static uint32_t oldTime = 0, nowTime = 0;
 	nowTime = millis();
 	if (nowTime - oldTime < 150) return;
-	Serial.println("btn time on");
+	Serial.println(strlen(BT_rx.buf));
 	oldTime = nowTime;
 
 	//여기에 코드 입력
@@ -540,33 +567,55 @@ void loop() {
 
 #else
 void loop() {
+	//Serial.println(freeMemory());
 	if (!GY9250.block) {
+		static bool sw = false;
 		static uint32_t oldTime1 = millis();
 		if (millis() - oldTime1 > 30) {
 			oldTime1 = millis();
 			digitalWrite(LED_G, 0);
 			GY9250.updateData();
-			GY9250.printAccelerometer();
-			Serial.println();
+			//GY9250.printAccelerometer();
+			//Serial.println();
 			GY9250.countService();
 			digitalWrite(LED_G, 1);
+
+			// btn falling interrupt (polling)
+			if (!digitalRead(BTN) && !sw) {
+				btn_pressed();
+				sw = true;
+			}
+			if (sw && digitalRead(BTN)) sw = false;
 		}
+		
 
 		static uint32_t oldTime2 = millis();
 		if (millis() - oldTime2 > 1000) {
 			oldTime2 = millis();
 			digitalWrite(LED_R, 0);
 			val = GY9250.getCount();
-			BT.write(val);
+			//BT.write(val);
 			digitalWrite(LED_R, 1);
+		}
+
+		if (BT.available()) {
+			char c = BT.read();
+			BT_rx.buf[BT_rx.idx++] = c;
+
+			if (c == '\n') { // if recieve data meets terminator
+				BT_rx.idx = 0;
+				if (strstr(BT_rx.buf, "st")) {
+					setTime((time_t)atou32(BT_rx.buf + 3));
+					memset(BT_rx.buf, 0, sizeof(BT_rx.buf));
+				}
+				else if(strstr(BT_rx.buf, "gc")) {
+
+				}
+			}
 		}
 
 		GY9250.block = 1;
 	}
-	
-	// measure service
-	// timein 범위: 100ms~3000ms
-	// min delta*t: 3
 
 }
 #endif
