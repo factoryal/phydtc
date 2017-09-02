@@ -1,3 +1,4 @@
+#include <TimeLib.h>
 #include <MemoryFree.h>
 #include <MPU9250.h>
 #include <I2Cdev.h>
@@ -6,7 +7,6 @@
 #include <SPI.h>
 #include <RBL_services.h>
 #include <RBL_nRF8001.h>
-#include <time.h>
 
 float fmap(float, float, float, float, float);
 uint32_t atou32(const char* str);
@@ -273,6 +273,10 @@ public:
 		return c.count;
 	}
 
+	void countInit() {
+		c.count = 0;
+	}
+
 	// Serial prints
 	void printAccelerometer() {
 		/*Serial.print(a.getMagnitude());*/
@@ -428,12 +432,51 @@ SoftwareSerial BT(S2RX, S1TX);
 class CountLog {
 private:
 	struct table_count{
-		uint16_t year;
-		uint8_t month;
-		uint8_t day;
-		uint32_t count;
-	};
+		time_t date = 0;
+		uint32_t count = 0;
+	} data;
 
+	CountLog* before = NULL;
+	CountLog* after = NULL;
+
+public:
+	// Data Structural Linker
+	void setAfter(CountLog *t) { after = t; }
+	void setBefore(CountLog *t) { before = t; }
+	void linkBeforeTo(CountLog *t) {
+		after = t;
+		t->setBefore(this);
+	}
+	void linkAfterTo(CountLog *t) {
+		before = t;
+		t->setAfter(this);
+	}
+	CountLog* getBefore() { return before; }
+	CountLog* getAfter() { return after; }
+
+
+	// Data management 
+	time_t setDate(time_t t) { data.date = t / 86400; }
+	bool setCount(uint32_t c, time_t t = now()) {
+		if (t / 86400 == data.date) {
+			data.count = c;
+			return true;
+		}
+		else if (before) before->setCount(c, t);
+		return false;
+	}
+	time_t getDate() {
+		return data.date; 
+	}
+	uint32_t getCount() { return data.count; }
+
+};
+
+
+// CountQueue 클래스
+// CountLog 클래스를 큐 자료구조로 관리하는 클래스입니다.
+class CountQueue {
+private:
 
 public:
 
@@ -447,7 +490,7 @@ struct {
 	char buf[20] = { 0 };
 	byte idx = 0;
 } BT_rx, BT_tx;
-
+CountLog *front, *rear, *tmp;
 
 float fmap(float x, float in_min, float in_max, float out_min, float out_max)
 {
@@ -498,6 +541,8 @@ void setup() {
 	}
 	Serial.println(F("GY9250 connection successfully."));
 	GY9250.activate(ACCEL | GYRO);
+
+	
 	
 	// 타이머 인터럽트 활성화
 	cli();
@@ -525,11 +570,11 @@ void loop() {
 			digitalWrite(LED_G, 1);
 
 			// btn falling interrupt (polling)
-			if (!digitalRead(BTN) && !sw) {
-				btn_pressed();
-				sw = true;
-			}
-			if (sw && digitalRead(BTN)) sw = false;
+if (!digitalRead(BTN) && !sw) {
+	btn_pressed();
+	sw = true;
+}
+if (sw && digitalRead(BTN)) sw = false;
 		}
 
 		static uint32_t oldTime2 = millis();
@@ -587,28 +632,72 @@ void loop() {
 			}
 			if (sw && digitalRead(BTN)) sw = false;
 		}
-		
+
 
 		static uint32_t oldTime2 = millis();
 		if (millis() - oldTime2 > 1000) {
 			oldTime2 = millis();
-			digitalWrite(LED_R, 0);
+			/*digitalWrite(LED_R, 0);
 			val = GY9250.getCount();
-			//BT.write(val);
-			digitalWrite(LED_R, 1);
+			BT.write(val);
+			digitalWrite(LED_R, 1);*/
+			
+
+			if (rear->getDate() != now() / 86400) {
+				CountLog* tmp = new CountLog();
+				tmp->setDate(now());
+				rear->linkBeforeTo(tmp);
+				rear = tmp;
+				GY9250.countInit();
+			}
+			rear->setCount(GY9250.getCount(), now());
+
+			Serial.print("now(): ");
+			Serial.print(now());
+			Serial.println();
 		}
 
+		// if incoming data available...
 		if (BT.available()) {
 			char c = BT.read();
 			BT_rx.buf[BT_rx.idx++] = c;
 
-			if (c == '\n') { // if recieve data meets terminator
+			if (c == 'n') { // if recieve data meets terminator
 				BT_rx.idx = 0;
 				if (strstr(BT_rx.buf, "st")) {
 					setTime((time_t)atou32(BT_rx.buf + 3));
 					memset(BT_rx.buf, 0, sizeof(BT_rx.buf));
+					// initiallize database
+					/*do {
+						CountLog* tmp = front;
+						front = front->getAfter();
+						delete tmp;
+					} while (front->getAfter());
+					delete front;*/
+					front = new CountLog();
+					rear = front;
 				}
-				else if(strstr(BT_rx.buf, "gc")) {
+				else if (strstr(BT_rx.buf, "gc")) {
+					do {
+						Serial.print(year(front->getDate()));
+						Serial.write('-');
+						Serial.print(month(front->getDate()));
+						Serial.write('-');
+						Serial.print(day(front->getDate()));
+						Serial.write('/');
+						Serial.print(front->getCount());
+						Serial.write('.');
+						Serial.print((uint16_t)front->getAfter());
+						Serial.write('\n');
+						if (front->getAfter()) {
+							front = front->getAfter();
+							delete front->getBefore();
+							front->setBefore(NULL);
+						}
+						else break;
+					} while (1);
+				}
+				else if (strstr(BT_rx.buf, "gb")) {
 
 				}
 			}
@@ -619,6 +708,7 @@ void loop() {
 
 }
 #endif
+
 
 // 타이머 인터럽트 실행 내용
 ISR(TIMER3_OVF_vect) {
