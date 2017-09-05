@@ -652,9 +652,6 @@ void loop() {
 			}
 			rear->setCount(GY9250.getCount(), now());
 
-			Serial.print("now(): ");
-			Serial.print(now());
-			Serial.println();
 		}
 
 		// if incoming data available...
@@ -662,8 +659,11 @@ void loop() {
 			char c = BT.read();
 			BT_rx.buf[BT_rx.idx++] = c;
 
-			if (c == 'n') { // if recieve data meets terminator
+			if (c == '\n') { // if recieve data meets terminator
 				BT_rx.idx = 0;
+				Serial.print("A: ");
+				Serial.print(BT_rx.buf);
+				Serial.println();
 				if (strstr(BT_rx.buf, "st")) {
 					setTime((time_t)atou32(BT_rx.buf + 3));
 					memset(BT_rx.buf, 0, sizeof(BT_rx.buf));
@@ -679,6 +679,7 @@ void loop() {
 				}
 				else if (strstr(BT_rx.buf, "gc")) {
 					do {
+						Serial.print("D: ");
 						Serial.print(year(front->getDate()));
 						Serial.write('-');
 						Serial.print(month(front->getDate()));
@@ -686,9 +687,15 @@ void loop() {
 						Serial.print(day(front->getDate()));
 						Serial.write('/');
 						Serial.print(front->getCount());
-						Serial.write('.');
-						Serial.print((uint16_t)front->getAfter());
 						Serial.write('\n');
+						BT.print(year(front->getDate()));
+						BT.write('-');
+						BT.print(month(front->getDate()));
+						BT.write('-');
+						BT.print(day(front->getDate()));
+						BT.write('/');
+						BT.print(front->getCount());
+						BT.write('\n');
 						if (front->getAfter()) {
 							front = front->getAfter();
 							delete front->getBefore();
@@ -696,9 +703,9 @@ void loop() {
 						}
 						else break;
 					} while (1);
+					BT.write('E');
 				}
 				else if (strstr(BT_rx.buf, "gb")) {
-
 				}
 			}
 		}
