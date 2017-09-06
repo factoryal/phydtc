@@ -14,7 +14,7 @@ uint32_t atou32(const char* str);
 // 설정에 관한 정의
 #define WAIT_SERIAL_STARTUP 0
 #define ANDROID_BT_PAIR_TEST 0
-#define BT_NRF8001 0
+#define BT_NRF8001 1
 
 // 상수에 관한 정의
 #define BLE_NAME "Devsign"
@@ -419,6 +419,25 @@ public:
 
 			buf_len = 0;
 		}
+	}
+	void print(unsigned long n, uint8_t base=10)
+	{
+		char buf[8 * sizeof(long) + 1]; // Assumes 8-bit chars plus zero byte.
+		char *str = &buf[sizeof(buf) - 1];
+
+		*str = '\0';
+
+		// prevent crash if called with base == 1
+		if (base < 2) base = 10;
+
+		do {
+			char c = n % base;
+			n /= base;
+
+			*--str = c < 10 ? c + '0' : c + 'A' - 10;
+		} while (n);
+
+		writeBytes((unsigned char *)str, sizeof(str));
 	}
 	//void end() { ble_disconnect(); }
 } BT;
