@@ -33,6 +33,12 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+// factoryal
+import com.seeun.ble.BLEPeripheralHelper;
+import java.lang.StringBuffer;
+
+
+
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +67,9 @@ public class BluetoothLeService extends Service {
     private ArrayList<BluetoothGattCharacteristic> mWritableCharacteristics
             = new ArrayList<BluetoothGattCharacteristic>();
     private BluetoothGattCharacteristic mDefaultChar = null;
+
+    // factoryal
+    private StringBuffer 
 
     /*BluetoothGattCallback은 client의 연결 상태나 client 운영에 대한 결과를 전달함.
     * 하나의 액티비티가 연결하고 데이터를 표시하고 GATT 서비스와 특성들을 표시함.
@@ -503,6 +512,18 @@ public class BluetoothLeService extends Service {
             Log.e("STAatus", "" + status);
         }else{
             Log.e("NULL이잖아 이","");
+        }
+    }
+
+    // factoryal
+    private synchronized void sendMessageViaBLE(String message) {
+        // Check that there's actually something to send
+        if (message.length() > 0) {
+            BLEPeripheralHelper.getInstance().send(message);
+            showOutgoingMessage(message);
+            // Reset out string buffer to zero and clear the edit text field
+            mOutStringBuffer.setLength(0);
+            mOutEditText.setText(mOutStringBuffer);
         }
     }
 }
