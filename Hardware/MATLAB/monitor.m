@@ -3,7 +3,7 @@ clear; close all; clc;
 %% monitoring
 clear; close all; clc;
 delete(instrfindall);
-s=serial('COM10', 'BaudRate', 115200)
+s=serial('COM12', 'BaudRate', 115200)
 fopen(s);
 time=100;
 
@@ -78,7 +78,7 @@ end
 %% distance measurement
 clear; close all; clc;
 delete(instrfindall);
-port=serial('COM10', 'BaudRate', 115200)
+port=serial('COM12', 'BaudRate', 115200)
 fopen(port);
 
 x = struct('isrising', 1, 'max', 0, 'min', 0, ...

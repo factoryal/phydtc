@@ -12,9 +12,9 @@ float fmap(float, float, float, float, float);
 uint32_t atou32(const char* str);
 
 // 설정에 관한 정의
-#define WAIT_SERIAL_STARTUP 0
+#define WAIT_SERIAL_STARTUP 1
 #define ANDROID_BT_PAIR_TEST 0
-#define BT_NRF8001 1
+#define BT_NRF8001 0
 
 // 상수에 관한 정의
 #define BLE_NAME "Devsign"
@@ -27,11 +27,11 @@ uint32_t atou32(const char* str);
 // 핀에 관한 정의
 #define LED_G A0
 #define LED_R 13
-#define BTN 8
+#define BTN 9
 #define S1TX A4
 #define S2RX 11
 #define BAT_REMAIN A2
-#define BAT_CHRG 3
+#define BAT_CHRG 8
 #define BAT_STBY 5
 
 
@@ -176,7 +176,8 @@ public:
 		M.initialize();
 		delay(1000);
 		Serial.print(F("Device ID: ")); Serial.println(M.getDeviceID(), HEX);
-		return M.testConnection();
+		//return M.testConnection();
+		return 1;
 	}
 
 	// 센서 선택
@@ -484,8 +485,8 @@ public:
 		else if (before) before->setCount(c, t);
 		return false;
 	}
-	time_t getDate() {
-		return data.date; 
+	time_t getDateSeconds() {
+		return data.date * 86400;
 	}
 	uint32_t getCount() { return data.count; }
 
@@ -509,7 +510,10 @@ struct {
 	char buf[20] = { 0 };
 	byte idx = 0;
 } BT_rx, BT_tx;
-CountLog *front, *rear, *tmp;
+CountLog *front = new CountLog();
+CountLog *rear = front, *tmp;
+
+
 
 float fmap(float x, float in_min, float in_max, float out_min, float out_max)
 {
@@ -639,8 +643,8 @@ void loop() {
 			oldTime1 = millis();
 			digitalWrite(LED_G, 0);
 			GY9250.updateData();
-			//GY9250.printAccelerometer();
-			//Serial.println();
+			/*GY9250.printAccelerometer();
+			Serial.println();*/
 			GY9250.countService();
 			digitalWrite(LED_G, 1);
 
@@ -661,8 +665,7 @@ void loop() {
 			BT.write(val);
 			digitalWrite(LED_R, 1);*/
 			
-
-			if (rear->getDate() != now() / 86400) {
+			if (rear->getDateSeconds() + 86400 < now()) {
 				CountLog* tmp = new CountLog();
 				tmp->setDate(now());
 				rear->linkBeforeTo(tmp);
@@ -671,50 +674,52 @@ void loop() {
 			}
 			rear->setCount(GY9250.getCount(), now());
 
+			Serial.print("now(): ");
+			Serial.println(now());
 		}
 
 		// if incoming data available...
-		if (BT.available()) {
-			char c = BT.read();
+		if (Serial.available()) {
+			char c = Serial.read();
 			BT_rx.buf[BT_rx.idx++] = c;
 
 			if (c == '\n') { // if recieve data meets terminator
-				BT_rx.idx = 0;
+				BT_rx.buf[BT_rx.idx - 1] = '\0';
 				Serial.print("A: ");
 				Serial.print(BT_rx.buf);
 				Serial.println();
+
 				if (strstr(BT_rx.buf, "st")) {
+					Serial.print("parsetime: ");
+					Serial.println(BT_rx.buf + 3);
+					Serial.print("len(btrxbuf): ");
+					Serial.println(strlen(BT_rx.buf));
 					setTime((time_t)atou32(BT_rx.buf + 3));
 					memset(BT_rx.buf, 0, sizeof(BT_rx.buf));
-					// initiallize database
-					/*do {
-						CountLog* tmp = front;
-						front = front->getAfter();
-						delete tmp;
-					} while (front->getAfter());
-					delete front;*/
-					front = new CountLog();
-					rear = front;
 				}
+
 				else if (strstr(BT_rx.buf, "gc")) {
 					do {
+						int dateSeconds = front->getDateSeconds();
 						Serial.print("D: ");
-						Serial.print(year(front->getDate()));
+						Serial.print(year(dateSeconds));
 						Serial.write('-');
-						Serial.print(month(front->getDate()));
+						Serial.print(month(dateSeconds));
 						Serial.write('-');
-						Serial.print(day(front->getDate()));
+						Serial.print(day(dateSeconds));
 						Serial.write('/');
 						Serial.print(front->getCount());
 						Serial.write('\n');
-						BT.print(year(front->getDate()));
+						BT.print(year(dateSeconds));
 						BT.write('-');
-						BT.print(month(front->getDate()));
+						BT.print(month(dateSeconds));
 						BT.write('-');
-						BT.print(day(front->getDate()));
+						BT.print(day(dateSeconds));
 						BT.write('/');
 						BT.print(front->getCount());
-						BT.write('\n');
+						delay(10);
+						BT.write('@');
+						delay(1);
 						if (front->getAfter()) {
 							front = front->getAfter();
 							delete front->getBefore();
@@ -722,10 +727,12 @@ void loop() {
 						}
 						else break;
 					} while (1);
-					BT.write('E');
 				}
 				else if (strstr(BT_rx.buf, "gb")) {
 				}
+
+				BT_rx.idx = 0;
+				memset(BT_rx.buf, 0, sizeof(BT_rx.buf));
 			}
 		}
 
