@@ -643,8 +643,8 @@ void loop() {
 			oldTime1 = millis();
 			digitalWrite(LED_G, 0);
 			GY9250.updateData();
-			/*GY9250.printAccelerometer();
-			Serial.println();*/
+			//GY9250.printAccelerometer();
+			//Serial.println();
 			GY9250.countService();
 			digitalWrite(LED_G, 1);
 
@@ -700,7 +700,7 @@ void loop() {
 
 				else if (strstr(BT_rx.buf, "gc")) {
 					do {
-						int dateSeconds = front->getDateSeconds();
+						uint64_t dateSeconds = front->getDateSeconds();
 						Serial.print("D: ");
 						Serial.print(year(dateSeconds));
 						Serial.write('-');
